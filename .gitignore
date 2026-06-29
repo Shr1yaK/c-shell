@@ -1,7 +1,6 @@
 # compiled output
 *.o
 *.out
-shell
 
 # macOS
 .DS_Store
