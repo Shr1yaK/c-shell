@@ -1,10 +1,26 @@
 #include "headers.h"
 #include "prompt.h"
 #include "parser.h"
+#include "hop.h"
 
 char home_dir[PATH_MAX];
 char hostname_str[256];
 char username_str[256];
+
+// splits input string into array of words
+// "hop ~/foo" → ["hop", "~/foo", NULL]
+char **tokenise(char *input, int *count) {
+    char **args = malloc(256 * sizeof(char *));
+    *count = 0;
+    char *copy = strdup(input);        // strtok modifies the string so copy it first
+    char *token = strtok(copy, " \t");
+    while (token != NULL) {
+        args[(*count)++] = token;
+        token = strtok(NULL, " \t");
+    }
+    args[*count] = NULL;
+    return args;
+}
 
 int main() {
     getcwd(home_dir, sizeof(home_dir));
@@ -30,7 +46,17 @@ int main() {
             continue;
         }
 
-        printf("valid: %s\n", input);
+        int count = 0;
+        char **args = tokenise(input, &count);
+
+        if (strcmp(args[0], "hop") == 0) {
+            hop(args, count);
+        } else {
+            printf("valid: %s\n", input);
+        }
+
+        free(args[0]);   // free the strdup copy
+        free(args);
     }
 
     return 0;
