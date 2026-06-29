@@ -2,17 +2,16 @@
 #include "prompt.h"
 #include "parser.h"
 #include "hop.h"
+#include "reveal.h"
 
 char home_dir[PATH_MAX];
 char hostname_str[256];
 char username_str[256];
 
-// splits input string into array of words
-// "hop ~/foo" → ["hop", "~/foo", NULL]
 char **tokenise(char *input, int *count) {
     char **args = malloc(256 * sizeof(char *));
     *count = 0;
-    char *copy = strdup(input);        // strtok modifies the string so copy it first
+    char *copy = strdup(input);
     char *token = strtok(copy, " \t");
     while (token != NULL) {
         args[(*count)++] = token;
@@ -51,11 +50,13 @@ int main() {
 
         if (strcmp(args[0], "hop") == 0) {
             hop(args, count);
+        } else if (strcmp(args[0], "reveal") == 0) {
+            reveal(args, count);
         } else {
             printf("valid: %s\n", input);
         }
 
-        free(args[0]);   // free the strdup copy
+        free(args[0]);
         free(args);
     }
 

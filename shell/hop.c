@@ -3,7 +3,7 @@
 
 // static = private to this file only
 // keeps its value between calls — this is how we track previous directory
-static char prev_dir[PATH_MAX] = "";
+char prev_dir_for_reveal[PATH_MAX] = "";
 
 // helper — actually perform the directory change to target
 static void do_hop(const char *target) {
@@ -16,7 +16,7 @@ static void do_hop(const char *target) {
     }
 
     // update prev_dir to where we WERE before this hop
-    strncpy(prev_dir, cwd, sizeof(prev_dir));
+    strncpy(prev_dir_for_reveal, cwd, sizeof(prev_dir_for_reveal));
 }
 
 void hop(char **args, int arg_count) {
@@ -44,11 +44,11 @@ void hop(char **args, int arg_count) {
 
         } else if (strcmp(arg, "-") == 0) {
             // hop - → go to previous directory
-            if (strlen(prev_dir) == 0) {
+            if (strlen(prev_dir_for_reveal) == 0) {
                 // no previous directory yet, do nothing
                 continue;
             }
-            do_hop(prev_dir);
+            do_hop(prev_dir_for_reveal);
 
         } else {
             // hop somepath → go to that path (absolute or relative)
