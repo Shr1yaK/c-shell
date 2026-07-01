@@ -1,6 +1,0 @@
-commands.c
-hop.c
-main.c
-parser.c
-prompt.c
-reveal.c
