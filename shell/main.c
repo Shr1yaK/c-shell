@@ -3,6 +3,7 @@
 #include "parser.h"
 #include "hop.h"
 #include "reveal.h"
+#include "commands.h"
 
 char home_dir[PATH_MAX];
 char hostname_str[256];
@@ -53,7 +54,8 @@ int main() {
         } else if (strcmp(args[0], "reveal") == 0) {
             reveal(args, count);
         } else {
-            printf("valid: %s\n", input);
+            // C.1 — run it as an external command
+            execute_command(args, count);
         }
 
         free(args[0]);
