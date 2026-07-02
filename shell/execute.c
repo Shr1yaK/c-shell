@@ -3,6 +3,7 @@
 #include "commands.h"
 #include "hop.h"
 #include "reveal.h"
+#include "log.h"
 
 // background job tracking
 typedef struct {
@@ -67,6 +68,31 @@ static void run_cmd_group(char *cmd, int background) {
     int count = 0;
     char **args = tokenise_cmd(cmd, &count);
     if (count == 0) { free(args); return; }
+
+    // add to log before executing
+    log_add(cmd);
+
+    if (strcmp(args[0], "log") == 0) {
+        if (count == 1) {
+            // log — print history
+            log_print();
+        } else if (count == 2 && strcmp(args[1], "purge") == 0) {
+            // log purge — clear history
+            log_purge();
+        } else if (count == 3 && strcmp(args[1], "execute") == 0) {
+            // log execute <index>
+            char *cmd_to_run = log_execute(atoi(args[2]));
+            if (cmd_to_run != NULL) {
+                execute(cmd_to_run);
+                free(cmd_to_run);
+            }
+        } else {
+            printf("log: Invalid Syntax!\n");
+        }
+        free(args[0]);
+        free(args);
+        return;
+    }
 
     if (strcmp(args[0], "hop") == 0) {
         hop(args, count);
