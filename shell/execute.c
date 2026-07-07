@@ -4,16 +4,18 @@
 #include "hop.h"
 #include "reveal.h"
 #include "log.h"
+#include "activities.h"
 
 // background job tracking
 typedef struct {
     pid_t pid;
     int   job_number;
     char  name[256];
-} BackgroundJob;
+    int   stopped;  // 0 = running, 1 = stopped
+} ActivityJob;
 
-static BackgroundJob bg_jobs[64];
-static int bg_job_count = 0;
+ActivityJob bg_jobs[64];
+int bg_job_count = 0;
 static int next_job_number = 1;
 
 // check if any background jobs have finished
@@ -103,6 +105,13 @@ static void run_cmd_group(char *cmd, int background) {
 
     if (strcmp(args[0], "reveal") == 0) {
         reveal(args, count);
+        free(args[0]);
+        free(args);
+        return;
+    }
+
+    if (strcmp(args[0], "activities") == 0) {
+        activities();
         free(args[0]);
         free(args);
         return;
