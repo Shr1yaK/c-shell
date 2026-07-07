@@ -5,6 +5,7 @@
 #include "reveal.h"
 #include "log.h"
 #include "activities.h"
+#include "ping.h"
 
 // background job tracking
 typedef struct {
@@ -105,6 +106,13 @@ static void run_cmd_group(char *cmd, int background) {
 
     if (strcmp(args[0], "reveal") == 0) {
         reveal(args, count);
+        free(args[0]);
+        free(args);
+        return;
+    }
+
+    if (strcmp(args[0], "ping") == 0) {
+        ping(args, count);
         free(args[0]);
         free(args);
         return;

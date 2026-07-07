@@ -1,7 +1,7 @@
 CC     = gcc
 CFLAGS = -std=c99 -D_POSIX_C_SOURCE=200809L -Wall -Wextra -Werror -Wno-unused-parameter
 TARGET = shell.out
-SRCS = main.c prompt.c parser.c hop.c reveal.c commands.c execute.c log.c activities.c
+SRCS = main.c prompt.c parser.c hop.c reveal.c commands.c execute.c log.c activities.c ping.c
 OBJS   = $(SRCS:.c=.o)
 
 all: $(TARGET)
