@@ -7,6 +7,7 @@
 #include "activities.h"
 #include "ping.h"
 #include "signals.h"
+#include "fgbg.h"
 
 extern char foreground_cmd_name[256];
 
@@ -123,6 +124,20 @@ static void run_cmd_group(char *cmd, int background) {
 
     if (strcmp(args[0], "activities") == 0) {
         activities();
+        free(args[0]);
+        free(args);
+        return;
+    }
+
+    if (strcmp(args[0], "fg") == 0) {
+        fg(args, count);
+        free(args[0]);
+        free(args);
+        return;
+    }
+
+    if (strcmp(args[0], "bg") == 0) {
+        bg(args, count);
         free(args[0]);
         free(args);
         return;
