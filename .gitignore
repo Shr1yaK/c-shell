@@ -4,4 +4,9 @@
 
 # macOS
 .DS_Store
+
+# test files
 *.txt
+
+# shell runtime files
+.shell_log
