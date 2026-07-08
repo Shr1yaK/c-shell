@@ -6,6 +6,9 @@
 #include "log.h"
 #include "activities.h"
 #include "ping.h"
+#include "signals.h"
+
+extern char foreground_cmd_name[256];
 
 // background job tracking
 typedef struct {
@@ -17,7 +20,7 @@ typedef struct {
 
 ActivityJob bg_jobs[64];
 int bg_job_count = 0;
-static int next_job_number = 1;
+int next_job_number = 1;
 
 // check if any background jobs have finished
 // called before printing each prompt
@@ -144,6 +147,8 @@ static void run_cmd_group(char *cmd, int background) {
         }
     } else {
         // foreground — run and wait
+        // set foreground command name for signal handlers
+        strncpy(foreground_cmd_name, args[0], sizeof(foreground_cmd_name));
         execute_command(args, count);
     }
 

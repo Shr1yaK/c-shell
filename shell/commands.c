@@ -1,5 +1,6 @@
 #include "headers.h"
 #include "commands.h"
+#include "signals.h"
 #include <fcntl.h>
 
 // parses a single command's args to find < and > redirections
@@ -80,10 +81,36 @@ void execute_command(char **args, int arg_count) {
         char **cmd_args = parse_redirections(cmd, count,
                                              &input_file, &output_file, &append);
 
-        pids[i] = fork();
+        pid_t pid = fork();
 
-        if (pids[i] == 0) {
-            // CHILD i
+        if (pid == 0) {
+            // put child in its own process group
+            setpgid(0, 0);
+
+            // C.2 input redirection
+            if (input_file != NULL) {
+                int fd = open(input_file, O_RDONLY);
+                if (fd == -1) {
+                    printf("No such file or directory\n");
+                    free(cmd_args);
+                    exit(1);
+                }
+                dup2(fd, STDIN_FILENO);
+                close(fd);
+            }
+
+            // C.3 output redirection
+            if (output_file != NULL) {
+                int flags = O_WRONLY | O_CREAT | (append ? O_APPEND : O_TRUNC);
+                int fd = open(output_file, flags, 0644);
+                if (fd == -1) {
+                    printf("Unable to create file for writing\n");
+                    free(cmd_args);
+                    exit(1);
+                }
+                dup2(fd, STDOUT_FILENO);
+                close(fd);
+            }
 
             // if not the first command, read from previous pipe
             if (i > 0) {
@@ -101,46 +128,37 @@ void execute_command(char **args, int arg_count) {
                 close(pipes[j][1]);
             }
 
-            // handle file redirections (overrides pipe if both present)
-            if (input_file != NULL) {
-                int fd = open(input_file, O_RDONLY);
-                if (fd == -1) {
-                    printf("No such file or directory\n");
-                    exit(1);
-                }
-                dup2(fd, STDIN_FILENO);
-                close(fd);
-            }
-
-            if (output_file != NULL) {
-                int flags = O_WRONLY | O_CREAT | (append ? O_APPEND : O_TRUNC);
-                int fd = open(output_file, flags, 0644);
-                if (fd == -1) {
-                    printf("Unable to create file for writing\n");
-                    exit(1);
-                }
-                dup2(fd, STDOUT_FILENO);
-                close(fd);
-            }
-
             execvp(cmd_args[0], cmd_args);
             printf("Command not found!\n");
             exit(1);
+        } else if (pid > 0) {
+            // set foreground pgid so signal handlers know who to signal
+            setpgid(pid, pid);
+            foreground_pgid = pid;
+
+            // WUNTRACED means waitpid returns if child is stopped too (Ctrl-Z)
+            int status;
+            waitpid(pid, &status, WUNTRACED);
+
+            // if child was stopped by signal, don't clear foreground_pgid here
+            // the signal handler already handled it
+            if (WIFSTOPPED(status)) {
+                // child was stopped — signal handler already moved it to bg_jobs
+            } else {
+                foreground_pgid = -1;
+            }
+        } else {
+            perror("fork");
         }
 
+        pids[i] = pid;
         free(cmd_args);
         free(cmd);
     }
 
-    // PARENT — close all pipe ends
-    // critical: if parent keeps write end open, next command waits forever
+    // close all pipe ends in parent
     for (int i = 0; i < num_cmds - 1; i++) {
         close(pipes[i][0]);
         close(pipes[i][1]);
-    }
-
-    // wait for all children to finish
-    for (int i = 0; i < num_cmds; i++) {
-        waitpid(pids[i], NULL, 0);
     }
 }

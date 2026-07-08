@@ -10,6 +10,7 @@
 #include <pwd.h>
 #include <limits.h>
 #include <ctype.h>
+#include <signal.h>
 
 #define MAX_CMD_LEN 4096
 

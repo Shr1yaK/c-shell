@@ -2,10 +2,21 @@
 #include "prompt.h"
 #include "parser.h"
 #include "execute.h"
+#include "signals.h"
 
 char home_dir[PATH_MAX];
 char hostname_str[256];
 char username_str[256];
+
+typedef struct {
+    pid_t pid;
+    int   job_number;
+    char  name[256];
+    int   stopped;
+} ActivityJob;
+
+extern ActivityJob bg_jobs[];
+extern int bg_job_count;
 
 void check_background_jobs();
 
@@ -15,6 +26,9 @@ int main() {
     struct passwd *pw = getpwuid(getuid());
     strncpy(username_str, pw->pw_name, sizeof(username_str));
 
+    // install signal handlers once at startup
+    setup_signal_handlers();
+
     char input[MAX_CMD_LEN];
 
     while (1) {
@@ -23,7 +37,12 @@ int main() {
         print_prompt();
 
         if (fgets(input, sizeof(input), stdin) == NULL) {
+            // Ctrl-D — kill all children and exit
             printf("\n");
+            for (int i = 0; i < bg_job_count; i++) {
+                kill(bg_jobs[i].pid, SIGKILL);
+            }
+            printf("logout\n");
             exit(0);
         }
 
